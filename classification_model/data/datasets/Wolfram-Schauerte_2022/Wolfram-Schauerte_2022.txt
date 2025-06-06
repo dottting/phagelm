@@ -1,0 +1,2 @@
+source,phageID,phageName,hostID,hostName,hostGroup,journal,year,firstAuthor,pubmedID,description,doi
+Wolfram-Schauerte_2022,1,T4 phage,1,E. coli B strain,Escherichia coli,Viruses,2022,Wolfram-Schauerte,36423111,"Exponentially growing E. coli infected with T4 phage (MOI = 3.1) in biological triplicates. Samples taken before (0) and 1, 4, 7 and 20 min post infection and analysed by stranded RNA-seq. [GSE211026]",https://doi.org/10.3390/v14112502

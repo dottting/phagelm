@@ -1,0 +1,2 @@
+source,phageID,phageName,hostID,hostName,hostGroup,journal,year,firstAuthor,pubmedID,description,doi
+Li_2020,12,JD032,14,C. difficile RT078,Clostridiodes difficile,mSystems,2020,Li,32371470,"Infection of Clostridioides difficile Ribotype 078 with phage JD032 (MOI = 10). Samples were collected 0, 30, 45, 75 and 135 min post-infection in biological triplicates (n=3). [PRJNA559590]",https://doi.org/10.1128/mSystems.00017-20

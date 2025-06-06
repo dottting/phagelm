@@ -1,0 +1,2 @@
+source,phageID,phageName,hostID,hostName,hostGroup,journal,year,firstAuthor,pubmedID,description,doi
+Leskinen_2016,5,PhiR1-37,7,Y. enterocolitica O:3,Yersinia enterolitica,Viruses,2016,Leskinen,27110815,"Fresh cultures (logarithmic phase) of Yersinia enterocolitica YeO3-R1 were infected with bacteriophage R1-37 (MOI = 10). RNA was sampled before (0) and 2, 5, 10, 15, 21, 28, 35, 42 and 49 min post infection (n=1). [GSE77068]",https://doi.org/https://doi.org/10.3390/v8040111

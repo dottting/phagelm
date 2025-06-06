@@ -1,0 +1,2 @@
+source,phageID,phageName,hostID,hostName,hostGroup,journal,year,firstAuthor,pubmedID,description,doi
+Finstrlova_2022_SH1000,3,Kayvirus phage K,5,S. aureus SH1000,Staphylococcus aureus,Microbiology Spectrum,2022,Finstrlova,3545752,"Infection of S. aureus strain SH1000 with Staphylococcus virus K (MOI = 7) sampled in biological triplicates at 0, 2, 5, 10, 20, and 30 minutes after infection. [GSE190637]",https://doi.org/10.1128/spectrum.00123-22

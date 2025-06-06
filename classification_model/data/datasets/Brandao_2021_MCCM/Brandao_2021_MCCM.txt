@@ -1,0 +1,2 @@
+source,phageID,phageName,hostID,hostName,hostGroup,journal,year,firstAuthor,pubmedID,description,doi
+Brandão_2021_MCCM,6,LUZ19,8,P. aeruginosa PAO1,Pseudomonas aeruginosa,RNA Biology,2021,Brandão,33448239,"P. aeruginosa PAO1 infected with LUZ19 phage in mammalian cell culture medium (MCCM) (MOI = 75). Samples taken 0 (before infection), 5, 10, 15 min post infection in biological triplicates. [GSE162278]",https://doi.org/10.1080/15476286.2020.1870844
