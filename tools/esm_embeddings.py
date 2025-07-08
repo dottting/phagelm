@@ -17,7 +17,7 @@ import numpy as np
 login(token="")
 client = ESM3.from_pretrained("esm3-open").to("cuda")
 
-df = pd.read_csv("./classification_model/data/proteins.csv")  # Input file
+df = pd.read_csv("./data/protein_sequences.tsv", sep="\t")  # Input file
 
 
 def get_esm_embedding(sequence):
@@ -40,7 +40,7 @@ def process_sequences(df):
         df.iterrows(), total=len(df), desc="Processing protein sequences"
     ):
         seq = row["sequence"]
-        protein_id = row["id"]
+        protein_id = row["protein_id"]
 
         seq = seq[:1500]  # Limit protein length
         embedding = get_esm_embedding(seq)
