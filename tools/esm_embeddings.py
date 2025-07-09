@@ -1,7 +1,7 @@
 """
 Generates ESM3 protein embeddings and saves them as .npy array files, one with the embeddings and one with ids.
 
-This scrit requires a huggingface token to use. Input is a csv with the columns "id" and "sequence".
+This scrit requires a huggingface token to use. Input is a csv with the columns "protein_id" and "sequence".
 """
 
 import pickle
