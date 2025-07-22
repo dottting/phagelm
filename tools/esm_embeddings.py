@@ -1,26 +1,29 @@
+#!/usr/bin/env python3
 """
 Generates ESM3 protein embeddings and saves them as .npy array files, one with the embeddings and one with ids.
 
-This scrit requires a huggingface token to use. Input is a csv with the columns "protein_id" and "sequence".
+This script requires a huggingface token to use.
+Input is a csv with the columns "protein_id" and "sequence".
 """
 
-import pickle
+import argparse, logging, tqdm
 import pandas as pd
+import numpy as np
 from pathlib import Path
 from huggingface_hub import login
 from esm.models.esm3 import ESM3
-from esm.sdk.api import ESMProtein, SamplingConfig, GenerationConfig
-import tqdm
-import numpy as np
+from esm.sdk.api import ESMProtein, SamplingConfig
 
 
-login(token="")
-client = ESM3.from_pretrained("esm3-open").to("cuda")
+def setup_logger():
+    logging.basicConfig(
+        format="%(asctime)s - %(levelname)s - %(message)s",
+        level=logging.INFO,
+    )
 
-df = pd.read_csv("./data/protein_sequences.tsv", sep="\t")  # Input file
 
-
-def get_esm_embedding(sequence):
+def get_esm_embedding(sequence, client):
+    """Generates ESM3 embeddings for a given protein sequence."""
     protein = ESMProtein(sequence=sequence)
     protein_tensor = client.encode(protein)
 
@@ -28,11 +31,14 @@ def get_esm_embedding(sequence):
         protein_tensor,
         SamplingConfig(return_per_residue_embeddings=True, return_mean_embedding=True),
     )
-
     return result
 
 
-def process_sequences(df):
+def process_sequences(df, client, outputdir):
+    """
+    Generate ESM3 embeddings for sequences (limited to length 1500) in the input DataFrame.
+    Saves embeddings and ids to .npy files.
+    """
     ids = []
     embeddings = []
 
@@ -40,15 +46,71 @@ def process_sequences(df):
         df.iterrows(), total=len(df), desc="Processing protein sequences"
     ):
         seq = row["sequence"]
-        protein_id = row["protein_id"]
+        protein_id = row["protein_id"][:1500]
 
-        seq = seq[:1500]  # Limit protein length
-        embedding = get_esm_embedding(seq)
-        ids.append(protein_id)
-        embeddings.append(embedding)
+        try:
+            embedding = get_esm_embedding(seq, client)
+            ids.append(protein_id)
+            embeddings.append(embedding)
+        except Exception as e:
+            logging.error(f"Failed to processing sequence {protein_id}: {e}")
 
-    np.save("embedding_ids.npy", np.array(ids))
-    np.save("embeddings.npy", np.array(embeddings))
+    np.save(outputdir / "embedding_ids.npy", np.array(ids))
+    np.save(outputdir / "embeddings.npy", np.array(embeddings))
+    logging.info(f"Saved {len(ids)} embeddings to {outputdir}/")
 
 
-process_sequences(df)
+def main():
+    parser = argparse.ArgumentParser(
+        description="Generate ESM3 embeddings for protein sequences."
+    )
+    parser.add_argument(
+        "-i",
+        "--input",
+        type=Path,
+        required=True,
+        help="Path to input TSV with 'protein_id' and 'sequence' columns.",
+    )
+    parser.add_argument(
+        "-o",
+        "--output",
+        type=Path,
+        default=Path("./data/embeddings"),
+        help="Output directory for embedding files. ['./data/embeddings']",
+    )
+    parser.add_argument(
+        "-t",
+        "--token",
+        type=str,
+        required=True,
+        help="Hugging Face token for authentication.",
+    )
+
+    args = parser.parse_args()
+    setup_logger()
+
+    # Login and load model
+    login(token=args.token)
+    logging.info("Logged into Hugging Face Hub.")
+    client = ESM3.from_pretrained("esm3-open").to("cuda")
+    logging.info("Loaded ESM3 model.")
+
+    # Read input
+    if not args.input.exists():
+        raise FileNotFoundError(f"Input file not found: {args.input}")
+    df = pd.read_csv(args.input, sep="\t")
+
+    if not {"protein_id", "sequence"}.issubset(df.columns):
+        raise ValueError(
+            "Input DataFrame must contain 'protein_id' and 'sequence' columns."
+        )
+
+    # Create output dir f it doesnt exist
+    args.output.mkdir(parents=True, exist_ok=True)
+
+    # Process sequences
+    process_sequences(df, client, args.output)
+
+
+if __name__ == "__main__":
+    main()
