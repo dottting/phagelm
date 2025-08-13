@@ -34,7 +34,7 @@ def get_esm_embedding(sequence, client):
     return result
 
 
-def process_sequences(df, client, outputdir):
+def process_sequences(df, client, outputdir, loop):
     """
     Generate ESM3 embeddings for sequences (limited to length 1500) in the input DataFrame.
     Saves embeddings and ids to .npy files.
@@ -55,9 +55,9 @@ def process_sequences(df, client, outputdir):
         except Exception as e:
             logging.error(f"Failed to processing sequence {protein_id}: {e}")
 
-    np.save(outputdir / "embedding_ids.npy", np.array(ids))
-    np.save(outputdir / "embeddings.npy", np.array(embeddings))
-    logging.info(f"Saved {len(ids)} embeddings to {outputdir}/")
+    np.save(outputdir / f"{loop}_embedding_ids.npy", np.array(ids))
+    np.save(outputdir / f"{loop}_embeddings.npy", np.array(embeddings))
+    logging.info(f"Saved {len(ids)} embeddings to {outputdir}/f{loop}_")
 
 
 def main():
@@ -105,11 +105,16 @@ def main():
             "Input DataFrame must contain 'protein_id' and 'sequence' columns."
         )
 
-    # Create output dir f it doesnt exist
+    # Create output dir if it doesnt exist
     args.output.mkdir(parents=True, exist_ok=True)
 
     # Process sequences
-    process_sequences(df, client, args.output)
+    chunk_size = 1000
+    chunks = [df.iloc[i : i + chunk_size] for i in range(0, len(df), chunk_size)]
+    logging.info(f"Processing {len(df)} sequences in {len(chunks)} chunks.")
+    for i, chunk in enumerate(chunks):
+        process_sequences(chunk, client, args.output, i)
+        logging.info(f"Processed {i * chunk_size} out of {len(df)} sequences total.")
 
 
 if __name__ == "__main__":
