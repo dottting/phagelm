@@ -7,7 +7,7 @@ Input is a csv with the columns "protein_id" and "sequence".
 """
 
 import argparse, logging, tqdm
-import pandas as pd
+import polars as pl
 import numpy as np
 from pathlib import Path
 from huggingface_hub import login
@@ -34,7 +34,7 @@ def get_esm_embedding(sequence, client):
     return result
 
 
-def process_sequences(df, client, outputdir, loop):
+def process_sequences(df, client, outputdir):
     """
     Generate ESM3 embeddings for sequences (limited to length 1500) in the input DataFrame.
     Saves embeddings and ids to .npy files.
@@ -42,8 +42,8 @@ def process_sequences(df, client, outputdir, loop):
     ids = []
     embeddings = []
 
-    for index, row in tqdm.tqdm(
-        df.iterrows(), total=len(df), desc="Processing protein sequences"
+    for row in tqdm.tqdm(
+        df.iter_rows(named=True), total=df.height, desc="Processing protein sequences"
     ):
         seq = row["sequence"]
         protein_id = row["protein_id"][:1500]
@@ -51,13 +51,15 @@ def process_sequences(df, client, outputdir, loop):
         try:
             embedding = get_esm_embedding(seq, client)
             ids.append(protein_id)
-            embeddings.append(embedding.mean_embedding.cpu())
+            embeddings.append(embedding.mean_embedding.cpu().numpy())
         except Exception as e:
             logging.error(f"Failed to processing sequence {protein_id}: {e}")
 
-    np.save(outputdir / f"{loop}_embedding_id.npy", np.array(ids))
-    np.save(outputdir / f"{loop}_embedding.npy", np.array(embeddings))
-    logging.info(f"Saved {len(ids)} embeddings to {outputdir}/{loop}_")
+    result_df = pl.DataFrame({"protein_id": ids, "embedding": embeddings})
+    outpath = outputdir / "embeddings.parquet"
+    result_df.write_parquet(outpath, compression="zstd")
+
+    logging.info(f"Saved {len(ids)} embeddings to {outputdir}")
 
 
 def main():
@@ -106,7 +108,7 @@ def main():
     # Read input
     if not args.input.exists():
         raise FileNotFoundError(f"Input file not found: {args.input}")
-    df = pd.read_csv(args.input, sep="\t")
+    df = pl.read_csv(args.input, separator="\t")
 
     if not {"protein_id", "sequence"}.issubset(df.columns):
         raise ValueError(
@@ -117,14 +119,7 @@ def main():
     args.output.mkdir(parents=True, exist_ok=True)
 
     # Process sequences
-    chunk_size = args.chunksize
-    chunks = [df.iloc[i : i + chunk_size] for i in range(0, len(df), chunk_size)]
-    logging.info(f"Processing {len(df)} sequences in {len(chunks)} chunks.")
-    for i, chunk in enumerate(chunks):
-        process_sequences(chunk, client, args.output, i)
-        logging.info(
-            f"Processed {(i + 1) * chunk_size} out of {len(df)} sequences total."
-        )
+    process_sequences(df, client, args.output)
 
 
 if __name__ == "__main__":
