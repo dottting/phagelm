@@ -57,7 +57,7 @@ def process_sequences(df, client, outputdir, loop):
 
     np.save(outputdir / f"{loop}_embedding_ids.npy", np.array(ids))
     np.save(outputdir / f"{loop}_embeddings.npy", np.array(embeddings))
-    logging.info(f"Saved {len(ids)} embeddings to {outputdir}/f{loop}_")
+    logging.info(f"Saved {len(ids)} embeddings to {outputdir}/{loop}_")
 
 
 def main():
@@ -85,6 +85,13 @@ def main():
         required=True,
         help="Hugging Face token for authentication.",
     )
+    parser.add_argument(
+        "-c",
+        "--chunksize",
+        type=int,
+        required=False,
+        help="How many sequences should be processed per file. [10000]",
+    )
 
     args = parser.parse_args()
     setup_logger()
@@ -109,12 +116,14 @@ def main():
     args.output.mkdir(parents=True, exist_ok=True)
 
     # Process sequences
-    chunk_size = 1000
+    chunk_size = args.chunksize
     chunks = [df.iloc[i : i + chunk_size] for i in range(0, len(df), chunk_size)]
     logging.info(f"Processing {len(df)} sequences in {len(chunks)} chunks.")
     for i, chunk in enumerate(chunks):
         process_sequences(chunk, client, args.output, i)
-        logging.info(f"Processed {i * chunk_size} out of {len(df)} sequences total.")
+        logging.info(
+            f"Processed {(i + 1) * chunk_size} out of {len(df)} sequences total."
+        )
 
 
 if __name__ == "__main__":
