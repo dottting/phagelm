@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
 """
-Generates ESM3 protein embeddings and saves them as .npy array files, one with the embeddings and one with ids.
+Generates ESM3 protein embeddings from an input file and stores the dataframe as a partquet file.
 
 This script requires a huggingface token to use.
-Input is a csv with the columns "protein_id" and "sequence".
+Input is a tsv with the columns "protein_id" and "sequence".
 """
 
 import argparse, logging, tqdm
 import polars as pl
-import numpy as np
 from pathlib import Path
 from huggingface_hub import login
 from esm.models.esm3 import ESM3
@@ -37,7 +36,7 @@ def get_esm_embedding(sequence, client):
 def process_sequences(df, client, outputdir):
     """
     Generate ESM3 embeddings for sequences (limited to length 1500) in the input DataFrame.
-    Saves embeddings and ids to .npy files.
+    Saves embeddings and ids to a parquet file.
     """
     ids = []
     embeddings = []
@@ -86,14 +85,6 @@ def main():
         type=str,
         required=True,
         help="Hugging Face token for authentication.",
-    )
-    parser.add_argument(
-        "-c",
-        "--chunksize",
-        type=int,
-        required=False,
-        default=10000,
-        help="How many sequences should be processed per file. [10000]",
     )
 
     args = parser.parse_args()
