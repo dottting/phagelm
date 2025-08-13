@@ -51,12 +51,12 @@ def process_sequences(df, client, outputdir, loop):
         try:
             embedding = get_esm_embedding(seq, client)
             ids.append(protein_id)
-            embeddings.append(embedding)
+            embeddings.append(embedding.mean_embedding.cpu())
         except Exception as e:
             logging.error(f"Failed to processing sequence {protein_id}: {e}")
 
-    np.save(outputdir / f"{loop}_embedding_ids.npy", np.array(ids))
-    np.save(outputdir / f"{loop}_embeddings.npy", np.array(embeddings))
+    np.save(outputdir / f"{loop}_embedding_id.npy", np.array(ids))
+    np.save(outputdir / f"{loop}_embedding.npy", np.array(embeddings))
     logging.info(f"Saved {len(ids)} embeddings to {outputdir}/{loop}_")
 
 
@@ -90,6 +90,7 @@ def main():
         "--chunksize",
         type=int,
         required=False,
+        default=10000,
         help="How many sequences should be processed per file. [10000]",
     )
 
