@@ -177,3 +177,6 @@ cython_debug/
 *.npy
 *.pdb
 *.dssp
+notes.md
+data/embeddings/embeddings.parquet
+data/all_pdbs.tar.gz

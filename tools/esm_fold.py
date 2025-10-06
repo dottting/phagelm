@@ -30,16 +30,19 @@ def get_esm_folds(df, client, output_dir):
             num_steps=int(len(seq) / 16),
             temperature=0.7,
         )
-
-        folded_protein = client.generate(protein, config)
-        if not isinstance(folded_protein, ESMProtein):
-            raise TypeError(
-                f"Expected ESMProtein, got {type(folded_protein)} for ID {row['protein_id']}"
+        try:
+            folded_protein = client.generate(protein, config)
+            if not isinstance(folded_protein, ESMProtein):
+                raise TypeError(
+                    f"Expected ESMProtein, got {type(folded_protein)} for ID {row['protein_id']}"
+                )
+            pdb_file = output_dir / f"{row['protein_id']}.pdb"
+            folded_protein.to_pdb(pdb_file)
+            logging.info(
+                f"Saved folded structure for {row['protein_id']} to {pdb_file}"
             )
-
-        pdb_file = output_dir / f"{row['protein_id']}.pdb"
-        folded_protein.to_pdb(pdb_file)
-        logging.info(f"Saved folded structure for {row['protein_id']} to {pdb_file}")
+        except Exception as e:
+            logging.info(f"Skipped {row['protein_id']} with exception {e}")
 
 
 def compress_pdbs(output_dir, archive_name="all_pdbs.tar.gz"):
